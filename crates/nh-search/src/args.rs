@@ -11,13 +11,13 @@ const DEFAULT_CHANNEL: &str = "nixos-unstable";
 /// or a local SPAM database
 pub struct SearchArgs {
   #[command(flatten)]
-  pub limit: LimitArg,
+  limit: LimitArg,
 
   #[command(flatten)]
-  pub channel: ChannelArg,
+  channel: ChannelArg,
 
   #[command(flatten)]
-  pub platforms: PlatformsArg,
+  platforms: PlatformsArg,
 
   /// Output results as JSON
   #[arg(
@@ -27,7 +27,7 @@ pub struct SearchArgs {
     value_parser = clap::builder::BoolishValueParser::new(),
     global = true
   )]
-  pub json: bool,
+  pub(crate) json: bool,
 
   /// Default search mode used when no subcommand is given.
   /// Accepts `packages` or `options` (scope defaults to `all`).
@@ -37,14 +37,14 @@ pub struct SearchArgs {
     default_value = "packages",
     value_name = "MODE"
   )]
-  pub default_search: SearchDefault,
+  default_search: SearchDefault,
 
   #[command(subcommand)]
-  pub mode: Option<SearchMode>,
+  mode: Option<SearchMode>,
 
   /// Query shorthand: equivalent to `nh search packages <query>` or
   /// `nh search options <query>` depending on `--default-search`
-  pub query: Vec<String>,
+  query: Vec<String>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -64,26 +64,26 @@ pub enum SearchMode {
 #[derive(Args, Debug)]
 pub struct PackagesArgs {
   #[command(flatten)]
-  pub limit: LimitArg,
+  limit: LimitArg,
 
   #[command(flatten)]
-  pub channel: ChannelArg,
+  channel: ChannelArg,
 
   #[command(flatten)]
-  pub platforms: PlatformsArg,
+  platforms: PlatformsArg,
 
   /// Name of the package to search
   #[arg(required = true)]
-  pub query: Vec<String>,
+  query: Vec<String>,
 }
 
 #[derive(Args, Debug)]
 pub struct OptionsArgs {
   #[command(flatten)]
-  pub limit: LimitArg,
+  limit: LimitArg,
 
   #[command(flatten)]
-  pub channel: ChannelArg,
+  channel: ChannelArg,
 
   /// Options scope: nixpkgs, home-manager, or all (default)
   #[arg(
@@ -93,17 +93,17 @@ pub struct OptionsArgs {
     require_equals = true,
     value_name = "SCOPE"
   )]
-  pub scope: Option<OptionScope>,
+  scope: Option<OptionScope>,
 
   /// Name of the option to search
   #[arg(required = true)]
-  pub query: Vec<String>,
+  query: Vec<String>,
 }
 
 #[derive(Args, Debug)]
 pub struct OfflineArgs {
   #[command(flatten)]
-  pub limit: LimitArg,
+  limit: LimitArg,
 
   /// Path to a SPAM database file. Specify multiple times to search across
   /// several databases
@@ -115,31 +115,31 @@ pub struct OfflineArgs {
     value_delimiter = ':',
     required = true
   )]
-  pub databases: Vec<PathBuf>,
+  databases: Vec<PathBuf>,
 
   /// Name of the package or option to search
   #[arg(required = true)]
-  pub query: Vec<String>,
+  query: Vec<String>,
 }
 
 #[derive(Args, Debug)]
 pub struct PrsArgs {
   #[command(flatten)]
-  pub days: DaysArg,
+  pub(crate) days: DaysArg,
 
   /// Pull request search query
   #[arg(required = true)]
-  pub query: Vec<String>,
+  pub(crate) query: Vec<String>,
 }
 
 #[derive(Args, Debug)]
 pub struct IssuesArgs {
   #[command(flatten)]
-  pub days: DaysArg,
+  pub(crate) days: DaysArg,
 
   /// Issue search query
   #[arg(required = true)]
-  pub query: Vec<String>,
+  pub(crate) query: Vec<String>,
 }
 
 #[derive(Args, Debug, Clone, Copy)]
@@ -151,7 +151,7 @@ pub struct LimitArg {
     short = 'l',
     default_value_t = DEFAULT_LIMIT
   )]
-  pub value: u64,
+  value: u64,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -164,7 +164,7 @@ pub struct ChannelArg {
     env = "NH_SEARCH_CHANNEL",
     default_value = DEFAULT_CHANNEL
   )]
-  pub value: String,
+  value: String,
 }
 
 #[derive(Args, Debug, Clone, Copy)]
@@ -177,7 +177,7 @@ pub struct PlatformsArg {
     env = "NH_SEARCH_PLATFORM",
     value_parser = clap::builder::BoolishValueParser::new()
   )]
-  pub value: bool,
+  value: bool,
 }
 
 #[derive(Args, Debug, Clone, Copy)]
@@ -189,7 +189,7 @@ pub struct DaysArg {
     long = "days",
     value_parser = clap::value_parser!(u32).range(1..)
   )]
-  pub value: Option<u32>,
+  pub(crate) value: Option<u32>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -212,7 +212,7 @@ pub enum SearchDefault {
   Options,
 }
 
-pub enum ResolvedSearchMode<'a> {
+pub(crate) enum ResolvedSearchMode<'a> {
   Packages {
     channel:   &'a str,
     limit:     u64,
@@ -241,7 +241,7 @@ impl SearchArgs {
   ///
   /// Returns an error when shorthand search is used without a query, or when
   /// shorthand option search receives package-only flags.
-  pub fn resolved_mode(&self) -> Result<ResolvedSearchMode<'_>> {
+  pub(crate) fn resolved_mode(&self) -> Result<ResolvedSearchMode<'_>> {
     match &self.mode {
       Some(SearchMode::Packages(args)) => {
         Ok(ResolvedSearchMode::Packages {
